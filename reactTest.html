@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Demo Contract Call</title>
+    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+
+
+<body>
+    <p>demo contract call</p>
+
+    <p>value to set <input type="text" id="myText">
+        <button id='setValue'>set value of contract</button>
+    </p>
+
+    <p>transfer ether address <input type="text" id="myEth">
+    </p>
+    <p>transfer ether amount <input type="text" id="myEthvalue">
+        <button id='transferAmt'>transfer</button>
+    </p>
+
+    <p>transfer token amount <input type="text" id="myTokenvalue">
+    </p>
+    <p>transfer token to address <input type="text" id="toTokenTransfer">
+    </p>
+
+    <p>transfer token address <input type="text" id="myTokenAddr">
+        <button id='transferToken'>transfer</button>
+    </p>
+
+
+    <p>your account address is <span id="accAddr"></span></p>
+    <p>your funds are <span id="fetchFunds"></span></p>
+
+    <p>your ERC20 funds are <span id="fetchERC20Funds"></span></p>
+
+    <p>signed transaction <input type="text" id="txsign">
+        <button id='btnsigntxn'>transfer</button>
+    </p>
+
+    <p>your signed transaction is <span id="returnedSign"></span></p>
+
+    <p>select network to be changed</p>
+
+    <form>
+        <label for="network">Choose network</label>
+        <select name="selectNetwork" id="selectNetwork">
+            <option value="ETH">Ethereum Mainnet</option>
+            <option value="SEPOLIA">sepolia</option>
+            <option value="GOERLI">goerli</option>
+            <option value="OP">optimism testnet</option>
+        </select>
+        <br><br>
+        <input type="submit" value="Submit">
+    </form>
+
+
+
+
+
+    <script type="text/javascript">
+        var account = null;
+        var contract = null;
+        var chainId = null;
+        var networkType = null;
+        var address = '0x82d0FFC579A24E67ECd2c7928ce92CF52Ca922A2';
+        const abi = [{ "inputs": [{ "internalType": "uint256", "name": "_x", "type": "uint256" }], "name": "set", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "x", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }];
+        const abiERC20 = [{ "inputs": [{ "internalType": "uint256", "name": "initialSupply", "type": "uint256" }], "stateMutability": "nonpayable", "type": "constructor" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "owner", "type": "address" }, { "indexed": true, "internalType": "address", "name": "spender", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "value", "type": "uint256" }], "name": "Approval", "type": "event" }, { "inputs": [{ "internalType": "address", "name": "spender", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "approve", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "spender", "type": "address" }, { "internalType": "uint256", "name": "subtractedValue", "type": "uint256" }], "name": "decreaseAllowance", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "spender", "type": "address" }, { "internalType": "uint256", "name": "addedValue", "type": "uint256" }], "name": "increaseAllowance", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "transfer", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "from", "type": "address" }, { "indexed": true, "internalType": "address", "name": "to", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "value", "type": "uint256" }], "name": "Transfer", "type": "event" }, { "inputs": [{ "internalType": "address", "name": "from", "type": "address" }, { "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "transferFrom", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "owner", "type": "address" }, { "internalType": "address", "name": "spender", "type": "address" }], "name": "allowance", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "account", "type": "address" }], "name": "balanceOf", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "decimals", "outputs": [{ "internalType": "uint8", "name": "", "type": "uint8" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "name", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "symbol", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "totalSupply", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }];
+        (async function () {
+            if (window.ethereum) {
+                await window.ethereum.send('eth_requestAccounts');
+                window.web3 = new Web3(window.ethereum);
+                chainId = await web3.eth.getChainId();
+
+                console.log(chainId);
+                const target = "0xaa36a7"
+                if (chainId != target) {
+
+                    const x = window.ethereum.request({
+                        method: 'wallet_switchEthereumChain',
+                        params: [{ chainId: target }],
+                    })
+                        .catch((error) => {
+                            window.ethereum.request({
+                                method: 'wallet_addEthereumChain',
+                                params: [{
+                                    chainId: '0xaa36a7',
+                                    chainName: 'sepolia',
+                                    nativeCurrency: {
+                                        name: 'Ethereum',
+                                        symbol: 'ETH',
+                                        decimals: 18
+                                    },
+                                    rpcUrls: ['https://ethereum-sepolia.blockpi.network/v1/rpc/public'],
+                                    blockExplorerUrls: ['https://sepolia.etherscan.io/']
+                                }]
+                            })
+                                .catch((error) => {
+                                    console.log(error)
+                                })
+                        })
+                    console.log(x)
+
+                }
+
+                var accounts = await web3.eth.getAccounts();
+                account = accounts[0];
+                console.log(account)
+                contract = new web3.eth.Contract(abi, address)
+                document.getElementById('fetchFunds').innerText = await fetchUserFunds();
+                document.getElementById('fetchERC20Funds').innerText = await fetchUserERC20Funds();
+                //document.getElementById('selectNetwork').innerText = await console.log(selectNetwork);
+                // document.getElementById('signTransaction').innerText = await transactionSign();
+                document.getElementById('accAddr').innerText = account;
+                document.getElementById('setValue').onclick = () => {
+                    valueSet();
+                }
+                const network =  document.getElementById('input').value;
+            console.log("network is",network);
+
+
+
+                document.getElementById('btnsigntxn').onclick = () => {
+                    signtransaction();
+                }
+
+                document.getElementById('transferAmt').onclick = () => {
+                    transferEth();
+                }
+
+                document.getElementById('transferToken').onclick = () => {
+                    transferToken();
+                }
+
+              //  document.getElementById('submit').innerText = await  getNetwork();
+
+                // document.getElementById('submit').onclick = () => {
+                //     getNetwork();
+                // }
+            }
+            else {
+                alert("please connect to metamask or any web3 supported browser");
+            }
+        })();
+
+
+        async function fetchUserFunds() {
+            let data = await web3.eth.getBalance(account);
+            const x = await web3.utils.fromWei(data, "ether");
+            console.log({ x });
+            return x;
+        }
+
+        async function valueSet() {
+            var x = document.getElementById("myText").value;
+            contract.methods.set(x).send({ from: account });
+        }
+
+        async function transferEth() {
+            var addr = document.getElementById("myEth").value;
+            var amt = document.getElementById("myEthvalue").value;
+            console.log(amt)
+            web3.eth.sendTransaction({ from: account, to: addr, value: web3.utils.toWei(amt, "ether") })
+                .then(receipt => {
+                    console.log(receipt);
+                })
+                .catch(error => {
+                    console.error(error);
+                });
+        }
+
+        async function transferToken() {const val = document. querySelector('input'). value;
+            var address = document.getElementById("myTokenAddr").value;
+            var amount = document.getElementById("myTokenvalue").value;
+            var to = document.getElementById("toTokenTransfer").value;
+            addressNew = new web3.eth.Contract(abiERC20, address)
+            addressNew.methods.transfer(to, amount).send({ from: account })
+                .then(receipt => {
+                    alert("funds successfully Transferred");
+                })
+                .catch(error => {
+                    console.error("there is error");
+                });
+        }
+
+        async function fetchUserERC20Funds() {
+            addressNew = new web3.eth.Contract(abiERC20, '0xCbB107090B43d1c0c7E6bF7B2A2a00cf3978aA1F');
+            let funds = await addressNew.methods.balanceOf(account).call();
+            const x = await web3.utils.fromWei(funds, "ether");
+            console.log(x)
+            return x
+
+        }
+
+        async function signtransaction() {
+            const message = document.getElementById("txsign").value;
+            const from = account //* pass in the user's address here
+            const signedData = window.ethereum.request({
+                method: 'personal_sign',
+                params: [message, from],
+            })
+            returnedSign = signedData;
+            document.getElementById('returnedSign').innerText = await signedData;
+            console.log(signedData)
+
+        }
+
+        async function getNetwork() {
+           // const network = document.getElementById("network").value;
+           const network =  document.getElementById('input').value;
+            console.log("network is",network);
+        }
+
+    </script>
+</body>
+
+</html>

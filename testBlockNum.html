@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Demo Contract Call</title>
+    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+
+
+
+<body style="background-color:rgb(127, 242, 250);">
+    <p align="center">Hello,</p>
+    <p align="center"> current network is <span id="currNetwork"></span></p>
+    <p align="center">your account address is <span id="accAddr"></span></p>
+    <p align="center">your ETH balance is <span id="fetchFunds"></span></p>
+
+
+
+    <p align="center">bridge amount  <br> <br>
+        <button id='transferETH'>transfer</button>
+    </p>
+
+    <p align="center">bridge abhi token from goerli </p>
+
+    <p align="center">amount <input type="text" id="bridgeERC20"> <br> <br>
+        <button id='ERC20Send'>transfer</button>
+    </p>
+
+    <p align="center">bridge your own ERC20 </p>
+
+    <p align="center">L1 contract Address <input type="text" id="L1Addr"> </p><br> <br>
+    <p align="center">L1 Token Name <input type="text" id="L1TokenName"> </p><br> <br>
+    <p align="center">L1 Token Symbol <input type="text" id="L1TokenSymbol"> </p><br> <br>
+    <p align="center">amount<input type="text" id="bridgeAmount"> <br> <br>
+        <button id='ERC20Own'>transfer</button>
+    </p>
+
+
+
+    <script type="text/javascript">
+
+        // op erc20maker addr = 0x3F94732CFd48eE3597d7cEDfb853cfB2De31219c
+        // boerli bridgeerc20 = 0x636Af16bf2f682dD3109e60102b8E1A089FedAa8
+        var account = null;
+        var contract = null;
+        var chainId = null;
+        var networkType = null;
+        var accountAddr = "0x636Af16bf2f682dD3109e60102b8E1A089FedAa8";
+    
+       
+        (async function () {
+            if (window.ethereum) {
+                await window.ethereum.send('eth_requestAccounts');
+                window.web3 = new Web3(window.ethereum);
+                chainId = await web3.eth.getChainId();
+                var networkName = null;
+                console.log(chainId)
+                switch (chainId) {
+                    case 1n:
+                        networkName = "Main";
+                        break
+                    case 5n:
+                        networkName = "Goerli";
+                        break;
+                    case 11155111n:
+                        networkName = "sepolia";
+                        break;
+                    default:
+                        networkName = "Unknown";
+                }
+                document.getElementById('currNetwork').innerText = networkName
+
+                const target = "0x5"
+                if (chainId != target) {
+
+                    const x = window.ethereum.request({
+                        method: 'wallet_switchEthereumChain',
+                        params: [{ chainId: target }],
+                    })
+                        .catch((error) => {
+                            window.ethereum.request({
+                                method: 'wallet_addEthereumChain',
+                                params: [{
+                                    chainId: '0x5',
+                                    chainName: 'Goerli',
+                                    nativeCurrency: {
+                                        name: 'Ethereum',
+                                        symbol: 'ETH',
+                                        decimals: 18
+                                    },
+                                    rpcUrls: ['https://ethereum-sepolia.blockpi.network/v1/rpc/public'],
+                                    blockExplorerUrls: ['https://sepolia.etherscan.io/']
+                                }]
+                            })
+                                .catch((error) => {
+                                    console.log(error)
+                                })
+                        })
+
+                }
+
+
+
+                var accounts = await web3.eth.getAccounts();
+                account = accounts[0];
+                console.log(account)
+                //contract = new web3.eth.Contract(abi_bridge, accountAddr)
+                document.getElementById('accAddr').innerText = await loadAmt();
+               
+
+                document.getElementById('transferETH').onclick = () => {
+                    loadAmt();
+                }
+
+                document.getElementById('ERC20Send').onclick = () => {
+                    sendTokens();
+                }
+
+                document.getElementById('ERC20Own').onclick = () => {
+                    //checkOptimism()
+
+
+                    makeInstance();
+
+                }
+
+
+
+
+            }
+            else {
+                alert("please connect to metamask or any web3 supported browser");
+            }
+        })();
+
+
+      
+
+        async function loadAmt() {
+            const block = await web3.eth.getBlockNumber()
+           // console.log(block)
+          const data=  await web3.eth.getBlock(block)
+          hash = data.transactions
+          console.log(hash)
+          for(i = 0;i<=4;i++) {
+            return data.transactions[i]
+          }
+         
+         
+        }
+
+        
+
+
+    </script>
+</body>
+
+</html>

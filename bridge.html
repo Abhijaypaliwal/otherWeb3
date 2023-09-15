@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Demo Contract Call</title>
+    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+
+
+
+<body style="background-color:rgb(127, 242, 250);">
+    <p align="center">Hello,</p>
+    <p align="center"> current network is <span id="currNetwork"></span></p>
+    <p align="center">your account address is <span id="accAddr"></span></p>
+    <p align="center">your ETH balance is <span id="fetchFunds"></span></p>
+
+
+
+    <p align="center">bridge amount <input type="text" id="myLoad"> <br> <br>
+        <button id='transferETH'>transfer</button>
+    </p>
+
+    <p align="center">bridge abhi token from goerli </p>
+
+    <p align="center">amount <input type="text" id="bridgeERC20"> <br> <br>
+        <button id='ERC20Send'>transfer</button>
+    </p>
+
+    <p align="center">bridge your own ERC20 </p>
+
+    <p align="center">L1 contract Address <input type="text" id="L1Addr"> </p><br> <br>
+    <p align="center">L1 Token Name <input type="text" id="L1TokenName"> </p><br> <br>
+    <p align="center">L1 Token Symbol <input type="text" id="L1TokenSymbol"> </p><br> <br>
+    <p align="center">amount<input type="text" id="bridgeAmount"> <br> <br>
+        <button id='ERC20Own'>transfer</button>
+    </p>
+
+
+
+    <script type="text/javascript">
+
+        // op erc20maker addr = 0x3F94732CFd48eE3597d7cEDfb853cfB2De31219c
+        // boerli bridgeerc20 = 0x636Af16bf2f682dD3109e60102b8E1A089FedAa8
+        var account = null;
+        var contract = null;
+        var chainId = null;
+        var networkType = null;
+        var accountAddr = "0x636Af16bf2f682dD3109e60102b8E1A089FedAa8";
+        const abi_bridge = [{ "inputs": [{ "internalType": "address payable", "name": "_messenger", "type": "address" }], "stateMutability": "nonpayable", "type": "constructor" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "localToken", "type": "address" }, { "indexed": true, "internalType": "address", "name": "remoteToken", "type": "address" }, { "indexed": true, "internalType": "address", "name": "from", "type": "address" }, { "indexed": false, "internalType": "address", "name": "to", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }, { "indexed": false, "internalType": "bytes", "name": "extraData", "type": "bytes" }], "name": "ERC20BridgeFinalized", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "localToken", "type": "address" }, { "indexed": true, "internalType": "address", "name": "remoteToken", "type": "address" }, { "indexed": true, "internalType": "address", "name": "from", "type": "address" }, { "indexed": false, "internalType": "address", "name": "to", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }, { "indexed": false, "internalType": "bytes", "name": "extraData", "type": "bytes" }], "name": "ERC20BridgeInitiated", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "l1Token", "type": "address" }, { "indexed": true, "internalType": "address", "name": "l2Token", "type": "address" }, { "indexed": true, "internalType": "address", "name": "from", "type": "address" }, { "indexed": false, "internalType": "address", "name": "to", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }, { "indexed": false, "internalType": "bytes", "name": "extraData", "type": "bytes" }], "name": "ERC20DepositInitiated", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "l1Token", "type": "address" }, { "indexed": true, "internalType": "address", "name": "l2Token", "type": "address" }, { "indexed": true, "internalType": "address", "name": "from", "type": "address" }, { "indexed": false, "internalType": "address", "name": "to", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }, { "indexed": false, "internalType": "bytes", "name": "extraData", "type": "bytes" }], "name": "ERC20WithdrawalFinalized", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "from", "type": "address" }, { "indexed": true, "internalType": "address", "name": "to", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }, { "indexed": false, "internalType": "bytes", "name": "extraData", "type": "bytes" }], "name": "ETHBridgeFinalized", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "from", "type": "address" }, { "indexed": true, "internalType": "address", "name": "to", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }, { "indexed": false, "internalType": "bytes", "name": "extraData", "type": "bytes" }], "name": "ETHBridgeInitiated", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "from", "type": "address" }, { "indexed": true, "internalType": "address", "name": "to", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }, { "indexed": false, "internalType": "bytes", "name": "extraData", "type": "bytes" }], "name": "ETHDepositInitiated", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "from", "type": "address" }, { "indexed": true, "internalType": "address", "name": "to", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }, { "indexed": false, "internalType": "bytes", "name": "extraData", "type": "bytes" }], "name": "ETHWithdrawalFinalized", "type": "event" }, { "inputs": [], "name": "MESSENGER", "outputs": [{ "internalType": "contract CrossDomainMessenger", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "OTHER_BRIDGE", "outputs": [{ "internalType": "contract StandardBridge", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "_localToken", "type": "address" }, { "internalType": "address", "name": "_remoteToken", "type": "address" }, { "internalType": "uint256", "name": "_amount", "type": "uint256" }, { "internalType": "uint32", "name": "_minGasLimit", "type": "uint32" }, { "internalType": "bytes", "name": "_extraData", "type": "bytes" }], "name": "bridgeERC20", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "_localToken", "type": "address" }, { "internalType": "address", "name": "_remoteToken", "type": "address" }, { "internalType": "address", "name": "_to", "type": "address" }, { "internalType": "uint256", "name": "_amount", "type": "uint256" }, { "internalType": "uint32", "name": "_minGasLimit", "type": "uint32" }, { "internalType": "bytes", "name": "_extraData", "type": "bytes" }], "name": "bridgeERC20To", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "uint32", "name": "_minGasLimit", "type": "uint32" }, { "internalType": "bytes", "name": "_extraData", "type": "bytes" }], "name": "bridgeETH", "outputs": [], "stateMutability": "payable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "_to", "type": "address" }, { "internalType": "uint32", "name": "_minGasLimit", "type": "uint32" }, { "internalType": "bytes", "name": "_extraData", "type": "bytes" }], "name": "bridgeETHTo", "outputs": [], "stateMutability": "payable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "_l1Token", "type": "address" }, { "internalType": "address", "name": "_l2Token", "type": "address" }, { "internalType": "uint256", "name": "_amount", "type": "uint256" }, { "internalType": "uint32", "name": "_minGasLimit", "type": "uint32" }, { "internalType": "bytes", "name": "_extraData", "type": "bytes" }], "name": "depositERC20", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "_l1Token", "type": "address" }, { "internalType": "address", "name": "_l2Token", "type": "address" }, { "internalType": "address", "name": "_to", "type": "address" }, { "internalType": "uint256", "name": "_amount", "type": "uint256" }, { "internalType": "uint32", "name": "_minGasLimit", "type": "uint32" }, { "internalType": "bytes", "name": "_extraData", "type": "bytes" }], "name": "depositERC20To", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "uint32", "name": "_minGasLimit", "type": "uint32" }, { "internalType": "bytes", "name": "_extraData", "type": "bytes" }], "name": "depositETH", "outputs": [], "stateMutability": "payable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "_to", "type": "address" }, { "internalType": "uint32", "name": "_minGasLimit", "type": "uint32" }, { "internalType": "bytes", "name": "_extraData", "type": "bytes" }], "name": "depositETHTo", "outputs": [], "stateMutability": "payable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "", "type": "address" }, { "internalType": "address", "name": "", "type": "address" }], "name": "deposits", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "_localToken", "type": "address" }, { "internalType": "address", "name": "_remoteToken", "type": "address" }, { "internalType": "address", "name": "_from", "type": "address" }, { "internalType": "address", "name": "_to", "type": "address" }, { "internalType": "uint256", "name": "_amount", "type": "uint256" }, { "internalType": "bytes", "name": "_extraData", "type": "bytes" }], "name": "finalizeBridgeERC20", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "_from", "type": "address" }, { "internalType": "address", "name": "_to", "type": "address" }, { "internalType": "uint256", "name": "_amount", "type": "uint256" }, { "internalType": "bytes", "name": "_extraData", "type": "bytes" }], "name": "finalizeBridgeETH", "outputs": [], "stateMutability": "payable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "_l1Token", "type": "address" }, { "internalType": "address", "name": "_l2Token", "type": "address" }, { "internalType": "address", "name": "_from", "type": "address" }, { "internalType": "address", "name": "_to", "type": "address" }, { "internalType": "uint256", "name": "_amount", "type": "uint256" }, { "internalType": "bytes", "name": "_extraData", "type": "bytes" }], "name": "finalizeERC20Withdrawal", "outputs": [], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "_from", "type": "address" }, { "internalType": "address", "name": "_to", "type": "address" }, { "internalType": "uint256", "name": "_amount", "type": "uint256" }, { "internalType": "bytes", "name": "_extraData", "type": "bytes" }], "name": "finalizeETHWithdrawal", "outputs": [], "stateMutability": "payable", "type": "function" }, { "inputs": [], "name": "l2TokenBridge", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "messenger", "outputs": [{ "internalType": "contract CrossDomainMessenger", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "version", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" }, { "stateMutability": "payable", "type": "receive" }];
+
+        const createL2TokenABI = [{ "inputs": [{ "internalType": "address", "name": "_bridge", "type": "address" }], "stateMutability": "nonpayable", "type": "constructor" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "localToken", "type": "address" }, { "indexed": true, "internalType": "address", "name": "remoteToken", "type": "address" }, { "indexed": false, "internalType": "address", "name": "deployer", "type": "address" }], "name": "OptimismMintableERC20Created", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "remoteToken", "type": "address" }, { "indexed": true, "internalType": "address", "name": "localToken", "type": "address" }], "name": "StandardL2TokenCreated", "type": "event" }, { "inputs": [], "name": "BRIDGE", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "_remoteToken", "type": "address" }, { "internalType": "string", "name": "_name", "type": "string" }, { "internalType": "string", "name": "_symbol", "type": "string" }], "name": "createOptimismMintableERC20", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "_remoteToken", "type": "address" }, { "internalType": "string", "name": "_name", "type": "string" }, { "internalType": "string", "name": "_symbol", "type": "string" }], "name": "createStandardL2Token", "outputs": [{ "internalType": "address", "name": "", "type": "address" }], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "version", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" }];
+
+        const ERC20ABI = [{ "inputs": [{ "internalType": "uint256", "name": "initialSupply", "type": "uint256" }], "stateMutability": "nonpayable", "type": "constructor" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "owner", "type": "address" }, { "indexed": true, "internalType": "address", "name": "spender", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "value", "type": "uint256" }], "name": "Approval", "type": "event" }, { "anonymous": false, "inputs": [{ "indexed": true, "internalType": "address", "name": "from", "type": "address" }, { "indexed": true, "internalType": "address", "name": "to", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "value", "type": "uint256" }], "name": "Transfer", "type": "event" }, { "inputs": [{ "internalType": "address", "name": "owner", "type": "address" }, { "internalType": "address", "name": "spender", "type": "address" }], "name": "allowance", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "spender", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "approve", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "account", "type": "address" }], "name": "balanceOf", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "decimals", "outputs": [{ "internalType": "uint8", "name": "", "type": "uint8" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "spender", "type": "address" }, { "internalType": "uint256", "name": "subtractedValue", "type": "uint256" }], "name": "decreaseAllowance", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "spender", "type": "address" }, { "internalType": "uint256", "name": "addedValue", "type": "uint256" }], "name": "increaseAllowance", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [], "name": "name", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "symbol", "outputs": [{ "internalType": "string", "name": "", "type": "string" }], "stateMutability": "view", "type": "function" }, { "inputs": [], "name": "totalSupply", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "transfer", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" }, { "inputs": [{ "internalType": "address", "name": "from", "type": "address" }, { "internalType": "address", "name": "to", "type": "address" }, { "internalType": "uint256", "name": "amount", "type": "uint256" }], "name": "transferFrom", "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }], "stateMutability": "nonpayable", "type": "function" }];
+        (async function () {
+            if (window.ethereum) {
+                await window.ethereum.send('eth_requestAccounts');
+                window.web3 = new Web3(window.ethereum);
+                chainId = await web3.eth.getChainId();
+                var networkName = null;
+                console.log(chainId)
+                switch (chainId) {
+                    case 1n:
+                        networkName = "Main";
+                        break
+                    case 5n:
+                        networkName = "Goerli";
+                        break;
+                    case 11155111n:
+                        networkName = "sepolia";
+                        break;
+                    default:
+                        networkName = "Unknown";
+                }
+                document.getElementById('currNetwork').innerText = networkName
+
+                const target = "0x5"
+                if (chainId != target) {
+
+                    const x = window.ethereum.request({
+                        method: 'wallet_switchEthereumChain',
+                        params: [{ chainId: target }],
+                    })
+                        .catch((error) => {
+                            window.ethereum.request({
+                                method: 'wallet_addEthereumChain',
+                                params: [{
+                                    chainId: '0x5',
+                                    chainName: 'Goerli',
+                                    nativeCurrency: {
+                                        name: 'Ethereum',
+                                        symbol: 'ETH',
+                                        decimals: 18
+                                    },
+                                    rpcUrls: ['https://ethereum-sepolia.blockpi.network/v1/rpc/public'],
+                                    blockExplorerUrls: ['https://sepolia.etherscan.io/']
+                                }]
+                            })
+                                .catch((error) => {
+                                    console.log(error)
+                                })
+                        })
+
+                }
+
+
+
+                var accounts = await web3.eth.getAccounts();
+                account = accounts[0];
+                console.log(account)
+                contract = new web3.eth.Contract(abi_bridge, accountAddr)
+                document.getElementById('accAddr').innerText = account;
+                document.getElementById('fetchFunds').innerText = await fetchUserFunds();
+
+                document.getElementById('transferETH').onclick = () => {
+                    loadAmt();
+                }
+
+                document.getElementById('ERC20Send').onclick = () => {
+                    sendTokens();
+                }
+
+                document.getElementById('ERC20Own').onclick = () => {
+                    //checkOptimism()
+
+
+                    makeInstance();
+
+                }
+
+
+
+
+            }
+            else {
+                alert("please connect to metamask or any web3 supported browser");
+            }
+        })();
+
+
+        async function fetchUserFunds() {
+            let data = await web3.eth.getBalance(account);
+            const x = await web3.utils.fromWei(data, "ether");
+
+            return x;
+        }
+
+        async function valueSet() {
+            var x = document.getElementById("myText").value;
+            contract.methods.set(x).send({ from: account });
+        }
+
+
+
+        async function loadAmt() {
+            var amt = document.getElementById("myLoad").value;
+            console.log(typeof (amt))
+            var amtEncoded = await web3.utils.toWei(amt, 'ether')
+            var addressNew = new web3.eth.Contract(abi_bridge, accountAddr)
+            console.log({ addressNew })
+            addressNew.methods.depositETH(100000, "0x").send({ from: account, gas: 3000000, value: amtEncoded })
+                .then(receipt => {
+                    console.log(receipt.blockHash);
+                    //document.getElementById('transactionDetails').innerText = receipt.blockHash;
+                    alert("funds successfully Transferred");
+                })
+                .catch(error => {
+                    console.error("there is error");
+                });
+        }
+
+        async function sendTokens() {
+            var localToken = "0xAeA748D0D603F6733f5889Cfde20c290b4b0d8BC"
+            var remoteToken = "0x6f76c15d9791143AbeB9fF30B29b2229e6b37A24"
+            var badToken = '0x3020Bba5fa6dc260C9E2c7a0C54033afC5333489'
+            var amt = document.getElementById("bridgeERC20").value;
+
+            var amtEncoded = await web3.utils.toWei(amt, 'ether')
+            var addressNew = new web3.eth.Contract(abi_bridge, accountAddr)
+            console.log({ addressNew })
+            addressNew.methods.bridgeERC20(localToken, remoteToken, amtEncoded, 100000, "0x").send({ from: account })
+                .then(receipt => {
+                    alert("funds successfully bridged");
+                })
+                .catch(error => {
+                    console.error("there is error");
+                });
+
+        }
+
+        async function checkOptimism() {
+            const target = "0x1a4"
+            if (chainId != target) {
+                window.ethereum.request({
+                    method: 'wallet_switchEthereumChain',
+                    params: [{ chainId: target }],
+                })
+                makeInstance()
+
+            }
+            else {
+                makeInstance()
+            }
+            return true
+
+        }
+
+        async function makeInstance() {
+            var L2TokenAddr = "0x3F94732CFd48eE3597d7cEDfb853cfB2De31219c";
+            var L1Addr = document.getElementById("L1Addr").value;
+            var name = document.getElementById("L1TokenName").value;
+            var symbol = document.getElementById("L1TokenSymbol").value;
+            var amt = document.getElementById("bridgeAmount").value;
+            var amtEncoded = await web3.utils.toWei(amt, 'ether')
+
+            const targetOP = "0x1a4"
+            const targetGoerli = "0x5"
+
+
+
+            if (chainId != targetOP) {
+                await window.ethereum.request({
+                    method: 'wallet_switchEthereumChain',
+                    params: [{ chainId: targetOP }],
+
+                })
+                chainId = targetOP
+            }
+
+            const addressNew = await new web3.eth.Contract(createL2TokenABI, L2TokenAddr)
+            const res = await addressNew.methods.createStandardL2Token(L1Addr, name, symbol).send({ from: account })
+            var text = res.logs[0].topics[2]
+            let result = text.substr(26, 54);
+            let remoteToken = "0x" + result
+            //console.log(tot)
+
+            if (chainId != targetGoerli) {
+                await window.ethereum.request({
+                    method: 'wallet_switchEthereumChain',
+                    params: [{ chainId: targetGoerli }],
+                })
+            }
+
+            var addressNewL1 = new web3.eth.Contract(abi_bridge, accountAddr)
+            var ERC20Token = new web3.eth.Contract(ERC20ABI, L1Addr)
+
+            await ERC20Token.methods.approve(accountAddr, amt).send({ from: account });
+
+            await addressNewL1.methods.bridgeERC20(L1Addr, remoteToken, amtEncoded, 100000, "0x").send({ from: account })
+                .then(receipt => {
+                    alert("funds successfully bridged");
+                })
+                .catch(error => {
+                    console.error("there is error");
+                });
+
+
+
+
+            // .then(receipt => {
+            //     console.log(receipt)
+            //     alert("funds successfully bridged");
+            // })
+            // .catch(error => {
+            //     console.error("there is error");
+            // });
+
+        }
+
+
+    </script>
+</body>
+
+</html>
